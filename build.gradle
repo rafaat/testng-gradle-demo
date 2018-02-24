@@ -1,0 +1,99 @@
+group 'com.rafaat.demo'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+targetCompatibility = 1.8
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'org.testng', name: 'testng', version: '6.+'
+}
+
+/**
+ * Using the default gradle test task (limited options)
+ * Usage:
+ * $ gradle testGroups -Pgroups=uat
+ * $ gradle testGroups -Pgroups=uat,prod
+ */
+task testGroups(type: Test, dependsOn: ['clean', 'classes']) {
+    useTestNG() {
+        includeGroups project.hasProperty("groups") ? "$groups" : "none"
+    }
+    testLogging.events "passed", "skipped", "failed"
+    testLogging.showStandardStreams = true
+    testLogging.exceptionFormat = "full"
+}
+
+/**
+ * Using the java exec task (more options)
+ * Usage:
+ * $ gradle testNG
+ * $ gradle testNG -Pgroups=uat
+ * $ gradle testNG -Pgroups=uat,prod
+ * $ gradle testNG -Psuites=Smoke.xml
+ * $ gradle testNG -Psuites=Regression.xml
+ * $ gradle testNG -Psuites=Regression.xml,Smoke.xml
+ * $ gradle testNG -Psuites=Regression.xml -Pgroups=uat
+ * $ gradle testNG -Psuites=Regression.xml -Pthreads=3
+ */
+task testNG(type: JavaExec, dependsOn: ['clean', 'classes']) {
+
+    classpath = files(project.sourceSets.main.compileClasspath,
+            project.sourceSets.main.runtimeClasspath,
+            project.sourceSets.test.compileClasspath,
+            project.sourceSets.test.runtimeClasspath)
+
+    main = 'org.testng.TestNG'
+
+    def resultDir = "$projectDir/build/test-results"
+    def suiteDir = "$projectDir/src/test/resources/test-suites"
+
+    args = ["-d", resultDir,
+            "-usedefaultlisteners",
+            "-parallel methods"]
+
+    if (project.hasProperty("threads")) {
+        args += ["-threadcount", "$threads"]
+    } else {
+        args += ["-threadcount", "1"]
+    }
+
+    if (project.hasProperty("groups")) {
+        args += ["-groups", "$groups"]
+    }
+
+    //TODO: add support for other args based on org.testng.CommandLineArgs
+
+    if (project.hasProperty("suites")) {
+        // for multiple suites separated by comma, split first then add them with their full-path
+        def suiteList = "$suites".split(",")
+        suiteList.each { suite ->
+            args += ["$suiteDir/$suite"]
+        }
+    } else {
+        def defaultXml = "$projectDir/build/tmp/default.xml"
+        doFirst {
+            new File("$projectDir/build/tmp/default.xml").text = """
+                <!DOCTYPE suite SYSTEM "http://testng.org/testng-1.0.dtd">
+                <suite name="Tests" parallel="true">
+                    <test name="Tests">
+                        <packages>
+                            <package name=".*" />
+                        </packages>
+                    </test>
+                </suite>
+            """
+        }
+        args += ["$defaultXml"]
+    }
+
+    doFirst {
+        println "TestNG args: " + args
+        println "\n"
+    }
+}
