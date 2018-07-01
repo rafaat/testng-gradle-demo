@@ -49,18 +49,21 @@ task testNG(type: JavaExec, dependsOn: ['clean', 'classes']) {
             project.sourceSets.test.runtimeClasspath)
 
     main = 'org.testng.TestNG'
+    systemProperties System.getProperties()
 
     def resultDir = "$projectDir/build/test-results"
     def suiteDir = "$projectDir/src/test/resources/test-suites"
 
     args = ["-d", resultDir,
-            "-usedefaultlisteners",
-            "-parallel methods"]
+            "-configfailurepolicy", "continue",
+            "-usedefaultlisteners", "false",
+            "-dataproviderthreadcount", "1",
+            "-parallel", "methods"]
 
     if (project.hasProperty("threads")) {
-        args += ["-threadcount", "$threads"]
+        args += ["-suitethreadpoolsize", "$threads"]
     } else {
-        args += ["-threadcount", "1"]
+        args += ["-suitethreadpoolsize", "1"]
     }
 
     if (project.hasProperty("groups")) {
