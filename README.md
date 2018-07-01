@@ -2,7 +2,7 @@
 
 A sample Gradle project to run TestNG tests with different command line args
 
-####Usage
+### Usage
 
 **Using the default gradle test task (limited options)**
 * Run a single group
