@@ -8,3 +8,5 @@
 out/
 build/
 target/
+test-output
+test-results

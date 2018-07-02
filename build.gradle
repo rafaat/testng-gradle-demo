@@ -43,10 +43,12 @@ task testGroups(type: Test, dependsOn: ['clean', 'classes']) {
  */
 task testNG(type: JavaExec, dependsOn: ['clean', 'classes']) {
 
-    classpath = files(project.sourceSets.main.compileClasspath,
-            project.sourceSets.main.runtimeClasspath,
-            project.sourceSets.test.compileClasspath,
-            project.sourceSets.test.runtimeClasspath)
+    classpath = files(
+        project.sourceSets.main.compileClasspath,
+        project.sourceSets.main.runtimeClasspath,
+        project.sourceSets.test.compileClasspath,
+        project.sourceSets.test.runtimeClasspath
+    )
 
     main = 'org.testng.TestNG'
     systemProperties System.getProperties()
@@ -56,13 +58,15 @@ task testNG(type: JavaExec, dependsOn: ['clean', 'classes']) {
 
     args = ["-d", resultDir,
             "-configfailurepolicy", "continue",
-            "-usedefaultlisteners", "false",
+            "-usedefaultlisteners", "true",
             "-dataproviderthreadcount", "1",
             "-parallel", "methods"]
 
     if (project.hasProperty("threads")) {
+        args += ["-threadcount", "$threads"]
         args += ["-suitethreadpoolsize", "$threads"]
     } else {
+        args += ["-threadcount", "1"]
         args += ["-suitethreadpoolsize", "1"]
     }
 
